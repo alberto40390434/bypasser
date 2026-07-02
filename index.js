@@ -1,25 +1,51 @@
 const express = require('express');
-const fetch = require('node-fetch');
+const axios = require('axios');
 const cors = require('cors');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
-
 app.use(cors());
 app.use(express.json());
-app.use(express.static('public'));
+
+app.get('/', (req, res) => {
+  res.send('Bypasser API is running!');
+});
 
 app.get('/bypass', async (req, res) => {
   const { url } = req.query;
   if (!url) return res.status(400).json({ error: 'No URL provided' });
 
   try {
-    const response = await fetch(`https://bypass.vip/v2?url=${encodeURIComponent(url)}`);
-    const data = await response.json();
-    res.json(data);
+    // Try bypass.vip first
+    const response = await axios.get(`https://bypass.vip/api?url=${encodeURIComponent(url)}`, {
+      timeout: 15000,
+      headers: { 'User-Agent': 'Mozilla/5.0' }
+    });
+    
+    const data = response.data;
+    
+    if (data && data.destination) {
+      return res.json({ success: true, result: data.destination });
+    } else if (data && data.result) {
+      return res.json({ success: true, result: data.result });
+    } else {
+      return res.json({ success: false, error: 'Could not bypass this link', raw: data });
+    }
   } catch (err) {
-    res.status(500).json({ error: 'Bypass failed', details: err.message });
+    // Try bypass.city as fallback
+    try {
+      const fallback = await axios.get(`https://bypass.city/api?url=${encodeURIComponent(url)}`, {
+        timeout: 15000,
+        headers: { 'User-Agent': 'Mozilla/5.0' }
+      });
+      const fdata = fallback.data;
+      if (fdata && (fdata.destination || fdata.result)) {
+        return res.json({ success: true, result: fdata.destination || fdata.result });
+      }
+    } catch (e) {}
+    
+    return res.status(500).json({ error: 'Bypass failed: ' + err.message });
   }
 });
 
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Bypasser running on port ${PORT}`));
