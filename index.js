@@ -1,27 +1,51 @@
 const express = require('express');
-const fetch = require('node-fetch');
-const cors = require('cors');
-
+const axios = require('axios');
 const app = express();
-app.use(cors());
+const PORT = process.env.PORT || 3000;
+
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
+});
+
 app.use(express.json());
 
 app.get('/', (req, res) => {
   res.send('Bypasser backend is running!');
 });
 
-app.post('/bypass', async (req, res) => {
-  const { url } = req.body;
+app.get('/bypass', async (req, res) => {
+  const { url } = req.query;
   if (!url) return res.status(400).json({ error: 'No URL provided' });
 
   try {
-    const response = await fetch(`https://bypass.vip/v2?url=${encodeURIComponent(url)}`);
-    const data = await response.json();
-    res.json(data);
+    const response = await axios.get(`https://bypass.vip/api?url=${encodeURIComponent(url)}`, {
+      headers: { 'User-Agent': 'Mozilla/5.0' },
+      timeout: 15000
+    });
+    return res.json(response.data);
   } catch (err) {
-    res.status(500).json({ error: 'Bypass failed', details: err.message });
+    console.error('bypass.vip error:', err.message);
   }
+
+  try {
+    const response = await axios.get(`https://api.bypass.city/bypass?url=${encodeURIComponent(url)}`, {
+      headers: { 'User-Agent': 'Mozilla/5.0' },
+      timeout: 15000
+    });
+    return res.json(response.data);
+  } catch (err) {
+    console.error('bypass.city error:', err.message);
+  }
+
+  return res.status(500).json({ error: 'All bypass methods failed' });
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
