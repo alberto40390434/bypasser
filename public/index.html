@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Floopy's Bypasser</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0f0f0f; color: #fff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+    .card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 16px; padding: 32px; width: 90%; max-width: 480px; }
+    h1 { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+    p { color: #888; font-size: 14px; margin-bottom: 24px; }
+    input { width: 100%; background: #111; border: 1px solid #333; border-radius: 10px; padding: 14px 16px; color: #fff; font-size: 15px; outline: none; margin-bottom: 12px; }
+    input:focus { border-color: #555; }
+    button { width: 100%; background: #fff; color: #000; border: none; border-radius: 10px; padding: 14px; font-size: 15px; font-weight: 600; cursor: pointer; }
+    button:active { opacity: 0.8; }
+    .result { margin-top: 20px; background: #111; border: 1px solid #2a2a2a; border-radius: 10px; padding: 16px; word-break: break-all; font-size: 14px; display: none; }
+    .result a { color: #4af; text-decoration: none; }
+    .error { color: #f66; }
+    .loading { color: #888; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Floopy's Bypasser</h1>
+    <p>Paste a Linkvertise, Luarmor, LootLabs, or work.ink link below</p>
+    <input type="text" id="linkInput" placeholder="https://linkvertise.com/..." />
+    <button onclick="bypass()">Bypass</button>
+    <div class="result" id="result"></div>
+  </div>
+  <script>
+    async function bypass() {
+      const url = document.getElementById('linkInput').value.trim();
+      const result = document.getElementById('result');
+      if (!url) return;
+      result.style.display = 'block';
+      result.innerHTML = '<span class="loading">Bypassing...</span>';
+      try {
+        const res = await fetch('/bypass?url=' + encodeURIComponent(url));
+        const data = await res.json();
+        if (data.destination) {
+          result.innerHTML = 'Done: <a href="' + data.destination + '" target="_blank">' + data.destination + '</a>';
+        } else if (data.error) {
+          result.innerHTML = '<span class="error">Error: ' + data.error + '</span>';
+        } else {
+          result.innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+        }
+      } catch (e) {
+        result.innerHTML = '<span class="error">Something went wrong</span>';
+      }
+    }
+  </script>
+</body>
+</html>
