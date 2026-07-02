@@ -6,8 +6,12 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.get('/bypass', async (req, res) => {
-  const { url } = req.query;
+app.get('/', (req, res) => {
+  res.send('Bypasser backend is running!');
+});
+
+app.post('/bypass', async (req, res) => {
+  const { url } = req.body;
   if (!url) return res.status(400).json({ error: 'No URL provided' });
 
   try {
@@ -20,4 +24,4 @@ app.get('/bypass', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Bypasser running on port ${PORT}`));
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
